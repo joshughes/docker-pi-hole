@@ -1,7 +1,6 @@
 FROM jsurf/rpi-raspbian
 MAINTAINER adam@diginc.us <adam@diginc.us>
 
-RUN [ "cross-build-start" ]
 
 ENV IMAGE debian
 ENV PATH /opt/pihole:${PATH}
@@ -10,7 +9,7 @@ COPY install.sh /install.sh
 ENV setupVars /etc/pihole/setupVars.conf
 ENV PIHOLE_INSTALL /tmp/ph_install.sh
 
-ENV TINI_VERSION v0.13.0
+ENV TINI_VERSION v0.14.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-armhf /tini
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-armhf.asc /tini.asc
 
@@ -27,7 +26,9 @@ ENV PHP_ENV_CONFIG '/etc/lighttpd/conf-enabled/15-fastcgi-php.conf'
 ENV PHP_ERROR_LOG '/var/log/lighttpd/error.log'
 COPY ./start.sh /
 COPY ./bash_functions.sh /
-
+COPY ./bin/dumb-init_1.0.3-1_armhf.deb /
+RUN dpkg -i /dumb-init_1.0.3-1_armhf.deb &&\
+    rm -rf /dumb-init_1.0.3-1_armhf.deb
 # IPv6 disable flag for networks/devices that do not support it
 # not fully supported in debian yet
 ENV IPv6 True
@@ -36,7 +37,5 @@ EXPOSE 53 53/udp
 EXPOSE 80
 
 SHELL ["/bin/bash", "-c"]
-ENTRYPOINT ["/tini", "--"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD [ "/start.sh" ]
-
-RUN [ "cross-build-end" ]  
